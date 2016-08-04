@@ -2,12 +2,19 @@
 # Install.ps1
 #
 
-$verbosePreference = "Continue"
-
 # Location and share name for the new deployment share
-$psDeploymentFolder = "C:\PSDeploymentShare"
-$psDeploymentShare = "PSDeploymentShare$"
+[CmdletBinding()]
+Param (
+    [Parameter(Mandatory=$true,Position=0)]
+        $psDeploymentFolder ,
+    [Parameter(Mandatory=$true,Position=1)]    
+        $psDeploymentShare ,
+    [Parameter(Mandatory=$true,Position=2)]
+        $psDeploymentDescription
+)
+$MDTServer = $env:COMPUTERNAME
 
+$verbosePreference = "Continue"
 # Create the folder and share
 New-Item -Path $psDeploymentFolder -ItemType directory
 New-SmbShare -Name $psDeploymentShare -Path $psDeploymentFolder -FullAccess Administrators
@@ -21,7 +28,7 @@ Write-Verbose "MDT installation directory: $mdtDir"
 Import-Module "$($mdtDir)Bin\MicrosoftDeploymentToolkit.psd1"
 
 # Create the deployment share at the specified path
-$null = New-PSDrive -Name PSD -PSProvider MDTProvider -Root $psDeploymentFolder
+$null = New-PSDrive -Name PSD -PSProvider MDTProvider -Root $psDeploymentFolder -Description $psDeploymentDescription -NetworkPath \\$MDTServer\$psDeploymentShare | Add-MDTPersistentDrive -Verbose
 
 # Copy the scripts
 Copy-Item "$install\Scripts\*.*" "$psDeploymentFolder\Scripts" -Recurse
